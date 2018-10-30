@@ -1,0 +1,28 @@
+#!/bin/bash
+
+AWS_LANG=$1
+VERSION=$2
+IMAGE="giraphme/aws_lambda"
+
+if [[ $AWS_LANG == "python" ]]; then
+  TAG=$IMAGE:$AWS_LANG$VERSION
+  DOCKER_FILE=Dockerfile.$AWS_LANG
+fi
+
+docker build -t $TAG --build-arg VERSION=$VERSION .
+docker push $TAG
+
+v=( `echo $VERSION | tr -s '.' ' '`)
+prev=""
+
+for e in ${v[@]}; do
+  if [[ $prev == "" ]]; then
+    prev=$e
+  else
+    prev=${prev}.${e}
+  fi
+
+  CURRENT_TAG=$IMAGE:$AWS_LANG$prev
+  docker tag $TAG $CURRENT_TAG
+  docker push $CURRENT_TAG
+done
